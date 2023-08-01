@@ -16,6 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
         user = User(**validated_data)
         user.username = user.email
         user.set_password(password)
+        user.is_active = True
         user.save()
         return user
 
@@ -57,22 +58,35 @@ class FriendRequestSerializer(serializers.ModelSerializer):
     sender = serializers.SerializerMethodField(method_name='get_sender')
 
     def get_sender(self, obj):
-        return self.context['request'].user.id
+        print("PPPPPPPPPPPPPPPPPPPPP")
+        print(obj.sender.id)
+        return obj.sender.id
+        # print(self.context['request'].method)
+        # return self.context['request'].user.id
+
+    # class Meta:
+    #     model = FriendRequest
+    #     fields = ['url', 'sender', 'receiver', 'is_cancelled', 'is_accepted']
 
     class Meta:
         model = FriendRequest
         fields = ['url', 'sender', 'receiver', 'is_cancelled', 'is_accepted']
+        extra_kwargs = {
+            'sender': {'read_only': True},  # Set 'sender' field as read-only
+        }
 
     def validate(self, data):
         sender = self.context['request'].user
         receiver = data['receiver']
 
+        print(sender.id, receiver.id)
+
         # Validate that sender and receiver are different users
-        if sender == receiver:
+        put_or_patch = True if self.context['request'].method in ['PATCH', 'PUT'] else False
+        if not put_or_patch and sender == receiver:
             raise serializers.ValidationError("Sender and receiver cannot be the same user.")
 
         # Enforce bidirectional uniqueness for friend requests
-        put_or_patch = True if self.context['request'].method in ['PATCH', 'PUT'] else False
         if not put_or_patch:
             sender_friend_request_exists = FriendRequest.objects.filter(sender=sender, receiver=receiver).exists()
             receiver_friend_request_exists = FriendRequest.objects.filter(sender=receiver, receiver=sender).exists()

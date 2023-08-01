@@ -1,5 +1,3 @@
-from django.views import View
-from django.shortcuts import redirect
 from django.contrib.auth import logout
 from django.db.models import Q
 from rest_framework import permissions
@@ -10,14 +8,29 @@ from rest_framework import status
 from rest_framework import filters
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.reverse import reverse
-from rest_framework.authtoken.models import Token
 from .models import User
 from .models import FriendRequest
-from .serializers import UserSerializer, FriendRequestSerializer, UserLoginSerializer, UserLogoutSerializer
+from .throttler import FriendRequestThrottle
+from .serializers import UserSerializer
+from .serializers import FriendRequestSerializer
+from .serializers import UserLoginSerializer
+from .serializers import UserLogoutSerializer
 
-# Create your views here.
-class SignUpView(View):
-    ...
+
+class SignUpAPIView(APIView):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+
+    def post(self, request):
+        context = {
+            'request': request
+        }
+        serializer = UserSerializer(data=request.data, context=context)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class LoginAPIView(APIView):
     serializer_class = UserLoginSerializer
@@ -54,6 +67,7 @@ class APIBaseView(APIView):
         else:
             data = {
                 'login': reverse('login', request=request, format=format),
+                'register': reverse('register', request=request, format=format),
             }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -73,8 +87,12 @@ class UserListAPIView(generics.ListCreateAPIView):
         search_query = request.query_params.get('search', '').strip().lower()
         page_size = request.query_params.get('page_size', 10)
         if search_query:
-            db_search_query = Q(email__icontains=search_query) | Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query)
-            users = users.filter(db_search_query)
+            email_exacting_users = users.filter(email__iexact=search_query)
+            if email_exacting_users.exists():
+                users = email_exacting_users
+            else:
+                db_search_query = Q(email__icontains=search_query) | Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query)
+                users = users.filter(db_search_query)
 
         paginator = self.pagination_class()
         paginator.page_size = page_size
@@ -170,9 +188,10 @@ class FriendRequestAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = FriendRequest.objects.all().order_by('-created_on')
     serializer_class = FriendRequestSerializer
+    throttle_classes = [FriendRequestThrottle]  # Add the custom throttle class
 
-    def perform_create(self, serializer):
-        serializer.save(sender=self.request.user.id)
+    # def perform_create(self, serializer):
+    #     serializer.save(sender=self.request.user.id)
 
     def get(self, request, *args, **kwargs):
         # http://localhost:8000/api/users/friends/?state=accepted
@@ -184,6 +203,7 @@ class FriendRequestAPIView(generics.ListCreateAPIView):
             friend_requests = FriendRequest.objects.filter(query, is_accepted=True)
         else:
             friend_requests = FriendRequest.objects.filter(query)
+        print(query)
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(friend_requests, request)
         context = {

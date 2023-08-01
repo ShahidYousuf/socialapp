@@ -141,5 +141,13 @@ LOGIN_REDIRECT_URL = '/'
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'DEFAULT_THROTTLE_RATES': {
+        'friend_request': '3/minute',
+    },
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ]
 }
+
+
