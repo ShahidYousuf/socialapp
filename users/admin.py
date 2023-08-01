@@ -4,7 +4,6 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 from django.urls import reverse
 from django.contrib import messages
-from .models import BaseUser
 from .models import FriendRequest
 from .models import User
 
@@ -45,10 +44,6 @@ class CustomUserAdmin(UserAdmin):
     #     return format_html(f"<a href={link} class='button'>Send Activation Link</a>")
 
 
-class UserAdmin(UserAdmin):
-    list_display = ('get_full_name', 'friends')
-    list_display_links = ('get_full_name',)
-
 
 class FriendRequestAdmin(admin.ModelAdmin):
     list_display = ('sender', 'receiver', 'is_accepted', 'is_cancelled',)
@@ -56,6 +51,5 @@ class FriendRequestAdmin(admin.ModelAdmin):
 
 
 
-admin.site.register(BaseUser, CustomUserAdmin)
-admin.site.register(User, UserAdmin)
+admin.site.register(User, CustomUserAdmin)
 admin.site.register(FriendRequest, FriendRequestAdmin)

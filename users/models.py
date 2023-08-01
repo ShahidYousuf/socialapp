@@ -1,11 +1,12 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 
-class BaseUser(AbstractUser):
+class User(AbstractUser):
 
     username = models.CharField(
         _('username'),
@@ -40,13 +41,6 @@ class BaseUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-    class Meta:
-        verbose_name = "Base User"
-        verbose_name_plural = "Base Users"
-
-
-class User(BaseUser):
-    name = models.CharField(_('Name'), max_length=60)
 
     def friends_by_requests_sent(self):
         friend_requests = self.friend_requests_sent.filter(is_accepted=True, is_cancelled=False)
@@ -70,6 +64,11 @@ class User(BaseUser):
     def friends(self):
         return self.friends_by_requests_sent() + self.friends_by_requests_received()
 
+    def friends_queryset(self):
+        query = Q(sender=self) | Q(receiver=self)
+        return FriendRequest.objects.filter(query)
+
+
 
 class FriendRequest(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="friend_requests_sent")
@@ -89,7 +88,6 @@ class FriendRequest(models.Model):
 
         if inserting and FriendRequest.objects.filter(sender=self.receiver, receiver=self.sender).exists():
             raise ValidationError("A friend request between these users already exists.")
-
 
     class Meta:
         constraints = [
