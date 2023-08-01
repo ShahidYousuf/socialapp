@@ -76,7 +76,9 @@ python manage.py migrate
 python manage.py runserver
 ```
 This will create a development server for the app at http://localhost:8000 by default, if you have anything running on this port, make sure the use another port or stop the process running at 8000
-#### 9. Go to your browser http://localhost:8000/api and browse the apis.
+#### 9. Go to your browser http://localhost:8000/api and browse the apis, you will be greeted with a page like below.
+
+![Sample API Home page](https://github.com/ShahidYousuf/socialapp/blob/master/app_home.png)
 
 
 #### Thanks you, for any queries, please reach out at shahidyousuf77@gmail.com
