@@ -188,10 +188,7 @@ class FriendRequestAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = FriendRequest.objects.all().order_by('-created_on')
     serializer_class = FriendRequestSerializer
-    throttle_classes = [FriendRequestThrottle]  # Add the custom throttle class
-
-    # def perform_create(self, serializer):
-    #     serializer.save(sender=self.request.user.id)
+    throttle_classes = [FriendRequestThrottle]
 
     def get(self, request, *args, **kwargs):
         # http://localhost:8000/api/users/friends/?state=accepted

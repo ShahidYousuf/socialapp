@@ -58,15 +58,7 @@ class FriendRequestSerializer(serializers.ModelSerializer):
     sender = serializers.SerializerMethodField(method_name='get_sender')
 
     def get_sender(self, obj):
-        print("PPPPPPPPPPPPPPPPPPPPP")
-        print(obj.sender.id)
         return obj.sender.id
-        # print(self.context['request'].method)
-        # return self.context['request'].user.id
-
-    # class Meta:
-    #     model = FriendRequest
-    #     fields = ['url', 'sender', 'receiver', 'is_cancelled', 'is_accepted']
 
     class Meta:
         model = FriendRequest
@@ -78,8 +70,6 @@ class FriendRequestSerializer(serializers.ModelSerializer):
     def validate(self, data):
         sender = self.context['request'].user
         receiver = data['receiver']
-
-        print(sender.id, receiver.id)
 
         # Validate that sender and receiver are different users
         put_or_patch = True if self.context['request'].method in ['PATCH', 'PUT'] else False
