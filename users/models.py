@@ -77,6 +77,9 @@ class FriendRequest(models.Model):
                                                                  'or rejected by receiver'))
     is_cancelled = models.BooleanField(default=False, help_text=_('designates whether this friend request is '
                                                                   'cancelled by sender before being accepted'))
+    created_on = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    modified_on = models.DateTimeField(auto_now=True, null=True, blank=True)
+
 
     def clean(self):
         inserting = False if self.pk else True
